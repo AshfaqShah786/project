@@ -34,7 +34,7 @@ CONVERSATION FLOW:
 Always be helpful, accurate, and focused on the user's property search needs.`;
 
 export async function ragChatCompletion(
-  messages: Array<{role: string, content: string}>,
+  messages: Array<{role: string; content: string}>,
   sessionId: string
 ) {
   const response = await openai.chat.completions.create({
