@@ -1,0 +1,97 @@
+OpenAI as your “brain” for all the dialog management, intent/slot extraction, follow up questions, language handling, even validation, and use RAG only to fetch property data (plus your Redis/Mongo for memory and your BraveAPI for web fallbacks). The trick is to wire everything together with OpenAI’s function calling feature. Here’s how that looks end to end:
+________________________________________
+1. Define Your Functions for the LLM
+In your code (Node.js, Python, whatever), register a small set of functions that the model can call:
+[
+  {
+    "name": "extract_intent_and_slots",
+    "description": "Parse user message to identify intent, fill slots (action, category, type, location, budget).",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "intent": { "type": "string", "enum": ["property_query", "general_info", "fallback"] },
+        "slots": {
+          "type": "object",
+          "properties": {
+            "action": { "type": ["string", "null"], "enum": ["buy", "rent", null] },
+            "category": { "type": ["string", "null"], "enum": ["residential", "commercial", null] },
+            "type": { "type": ["string", "null"], "enum": ["flat", "villa", "plot", "house", null] },
+            "location": { "type": ["string", "null"] },
+            "budget_min": { "type": ["number", "null"] },
+            "budget_max": { "type": ["number", "null"] }
+          },
+          "required": []
+        }
+      }
+    }
+  },
+  {
+    "name": "fetch_properties",
+    "description": "Query Pinecone + Mongo for matching property listings based on filled slots.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "slots": { "$ref": "#/properties/slots" }
+      },
+      "required": ["slots"]
+    }
+  },
+  {
+    "name": "search_web",
+    "description": "Fetch real estate info from whitelisted sites if internal data isn’t enough.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": { "type": "string" }
+      },
+      "required": ["query"]
+    }
+  },
+  {
+    "name": "save_memory",
+    "description": "Persist updated slot values or user preferences to Redis/Mongo.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "session_id": { "type": "string" },
+        "slots": { "$ref": "#/properties/slots" },
+        "language": { "type": "string" }
+      },
+      "required": ["session_id", "slots"]
+    }
+  }
+]
+________________________________________
+2. The Chat Loop
+1.	You receive a user message (text or Whisper transcript).
+2.	First API call: send everything to the model with:
+o	Your system prompt (instructions about asking missing slot questions, language preference, no hallucinations, etc.)
+o	A single user message
+o	functions: [...] containing the definitions above
+o	function_call: "auto"
+3.	Model responds by:
+o	Calling extract_intent_and_slots with its JSON payload
+4.	Your code reads that function call result, updates Redis session, and checks for missing slots.
+o	If slots remain, you prompt the model again with something like:
+The user’s slots are now: {…}. 
+Missing: [category, type]. 
+Please ask for the next missing slot.
+o	If all slots are filled, call fetch_properties.
+5.	Model calls fetch_properties({ slots: {...} }).
+6.	Your code actually queries Pinecone + Mongo, returns the top 5–10 listings back into the chat as the function_response.
+7.	Model then synthesizes a final user facing reply (“Here are 7 flats in Bangalore under ₹1 Cr…”)
+8.	Optional: if function_response was empty or insufficient, the model might instead call search_web, then re run the RAG prompt, and finally answer.
+9.	After generating the reply, you call save_memory to persist the updated slots and preferences.
+________________________________________
+3. Why This Works
+•	OpenAI handles: intent detection, slot filling, smart question generation, response synthesis, even language translation and voice style consistency—so you don’t write that logic yourself.
+•	Your code handles: function invocation (DB queries, cache reads/writes, web searches), and feeds the results back into the LLM.
+•	RAG is purely for retrieving the actual property data (vector search + metadata filters)—everything else is orchestrated by the LLM.
+________________________________________
+4. System Prompt Snippet
+You are MyHomi AI, an expert Indian real estate assistant.
+1. Always ask for missing info in this order: buy/rent, residential/commercial, flat/villa/plot/house, location, budget.
+2. Once all slots are filled, return property matches by calling fetch_properties.
+3. If internal data is insufficient, call search_web.
+4. Do not hallucinate. If you truly can’t find data, say “I’m sorry, no matches found.”
+5. Respect the user’s language preference.

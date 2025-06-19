@@ -1,8 +1,13 @@
 import { 
   users, type User, type InsertUser,
   conversations, type Conversation, type InsertConversation,
-  messages, type Message, type InsertMessage
+  messages, type Message, type InsertMessage,
+  properties, type Property, type InsertProperty,
+  userSessions, type UserSession, type InsertUserSession,
+  type Slots
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, gte, lte, ilike, desc } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -19,97 +24,148 @@ export interface IStorage {
   getMessages(conversationId: number): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
   deleteMessages(conversationId: number): Promise<void>;
+
+  // Properties
+  searchProperties(slots: Slots): Promise<Property[]>;
+  createProperty(property: InsertProperty): Promise<Property>;
+  getProperties(): Promise<Property[]>;
+
+  // User Sessions
+  getUserSession(sessionId: string): Promise<UserSession | undefined>;
+  createUserSession(session: InsertUserSession): Promise<UserSession>;
+  updateUserSession(sessionId: string, slots: Slots, language?: string): Promise<UserSession>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private conversations: Map<number, Conversation>;
-  private messages: Map<number, Message>;
-  private currentUserId: number;
-  private currentConversationId: number;
-  private currentMessageId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.conversations = new Map();
-    this.messages = new Map();
-    this.currentUserId = 1;
-    this.currentConversationId = 1;
-    this.currentMessageId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   async getConversations(): Promise<Conversation[]> {
-    return Array.from(this.conversations.values()).sort((a, b) => 
-      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-    );
+    return await db.select().from(conversations).orderBy(desc(conversations.createdAt));
   }
 
   async getConversation(id: number): Promise<Conversation | undefined> {
-    return this.conversations.get(id);
+    const [conversation] = await db.select().from(conversations).where(eq(conversations.id, id));
+    return conversation || undefined;
   }
 
   async createConversation(insertConversation: InsertConversation): Promise<Conversation> {
-    const id = this.currentConversationId++;
-    const conversation: Conversation = { 
-      ...insertConversation, 
-      id, 
-      createdAt: new Date()
-    };
-    this.conversations.set(id, conversation);
+    const [conversation] = await db
+      .insert(conversations)
+      .values(insertConversation)
+      .returning();
     return conversation;
   }
 
   async deleteConversation(id: number): Promise<void> {
-    this.conversations.delete(id);
-    // Also delete all messages in this conversation
-    const messagesToDelete = Array.from(this.messages.entries())
-      .filter(([_, message]) => message.conversationId === id)
-      .map(([messageId]) => messageId);
-    
-    messagesToDelete.forEach(messageId => this.messages.delete(messageId));
+    await db.delete(messages).where(eq(messages.conversationId, id));
+    await db.delete(conversations).where(eq(conversations.id, id));
   }
 
   async getMessages(conversationId: number): Promise<Message[]> {
-    return Array.from(this.messages.values())
-      .filter(message => message.conversationId === conversationId)
-      .sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+    return await db.select().from(messages)
+      .where(eq(messages.conversationId, conversationId))
+      .orderBy(messages.createdAt);
   }
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
-    const id = this.currentMessageId++;
-    const message: Message = { 
-      ...insertMessage, 
-      id, 
-      createdAt: new Date()
-    };
-    this.messages.set(id, message);
+    const [message] = await db
+      .insert(messages)
+      .values({
+        ...insertMessage,
+        functionCall: insertMessage.functionCall || null,
+        functionResponse: insertMessage.functionResponse || null,
+      })
+      .returning();
     return message;
   }
 
   async deleteMessages(conversationId: number): Promise<void> {
-    const messagesToDelete = Array.from(this.messages.entries())
-      .filter(([_, message]) => message.conversationId === conversationId)
-      .map(([messageId]) => messageId);
-    
-    messagesToDelete.forEach(messageId => this.messages.delete(messageId));
+    await db.delete(messages).where(eq(messages.conversationId, conversationId));
+  }
+
+  async searchProperties(slots: Slots): Promise<Property[]> {
+    const conditions = [eq(properties.isActive, true)];
+
+    if (slots.action) {
+      conditions.push(eq(properties.action, slots.action));
+    }
+    if (slots.category) {
+      conditions.push(eq(properties.category, slots.category));
+    }
+    if (slots.type) {
+      conditions.push(eq(properties.type, slots.type));
+    }
+    if (slots.location) {
+      conditions.push(ilike(properties.location, `%${slots.location}%`));
+    }
+    if (slots.budget_min) {
+      conditions.push(gte(properties.price, slots.budget_min.toString()));
+    }
+    if (slots.budget_max) {
+      conditions.push(lte(properties.price, slots.budget_max.toString()));
+    }
+
+    return await db.select().from(properties)
+      .where(and(...conditions))
+      .orderBy(properties.createdAt)
+      .limit(10);
+  }
+
+  async createProperty(insertProperty: InsertProperty): Promise<Property> {
+    const [property] = await db
+      .insert(properties)
+      .values(insertProperty)
+      .returning();
+    return property;
+  }
+
+  async getProperties(): Promise<Property[]> {
+    return await db.select().from(properties)
+      .where(eq(properties.isActive, true))
+      .orderBy(properties.createdAt);
+  }
+
+  async getUserSession(sessionId: string): Promise<UserSession | undefined> {
+    const [session] = await db.select().from(userSessions).where(eq(userSessions.sessionId, sessionId));
+    return session || undefined;
+  }
+
+  async createUserSession(insertSession: InsertUserSession): Promise<UserSession> {
+    const [session] = await db
+      .insert(userSessions)
+      .values(insertSession)
+      .returning();
+    return session;
+  }
+
+  async updateUserSession(sessionId: string, slots: Slots, language?: string): Promise<UserSession> {
+    const [session] = await db
+      .update(userSessions)
+      .set({
+        slots,
+        language,
+        lastInteraction: new Date(),
+      })
+      .where(eq(userSessions.sessionId, sessionId))
+      .returning();
+    return session;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
