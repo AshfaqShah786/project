@@ -1,7 +1,6 @@
 import OpenAI from "openai";
 import { functionDefinitions } from "./functions";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key"
 });
@@ -39,7 +38,7 @@ export async function ragChatCompletion(
   sessionId: string
 ) {
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-4o-mini-2024-07-18",
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       ...messages.map(msg => ({
@@ -57,7 +56,7 @@ export async function ragChatCompletion(
 
 export async function streamChatCompletion(messages: Array<{role: string, content: string}>) {
   const stream = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-4o-mini-2024-07-18",
     messages: messages.map(msg => ({
       role: msg.role as "user" | "assistant" | "system",
       content: msg.content
@@ -71,7 +70,7 @@ export async function streamChatCompletion(messages: Array<{role: string, conten
 export async function generateTitle(firstMessage: string): Promise<string> {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o-mini-2024-07-18",
       messages: [
         {
           role: "system",
