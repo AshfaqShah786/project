@@ -21,14 +21,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/conversations", async (req, res) => {
     try {
       const sessionId = uuidv4();
+      const validatedData = insertConversationSchema.parse(req.body);
       const data = {
-        ...insertConversationSchema.parse(req.body),
+        ...validatedData,
         sessionId
       };
       const conversation = await storage.createConversation(data);
       res.json(conversation);
     } catch (error) {
-      res.status(400).json({ error: "Invalid conversation data" });
+      console.error("Error creating conversation:", error);
+      res.status(400).json({ error: "Invalid conversation data", details: error });
     }
   });
 

@@ -70,7 +70,6 @@ export const messagesRelations = relations(messages, ({ one }) => ({
 // Schemas
 export const insertConversationSchema = createInsertSchema(conversations).pick({
   title: true,
-  sessionId: true,
   language: true,
 });
 

@@ -17,7 +17,7 @@ export interface IStorage {
   // Conversations
   getConversations(): Promise<Conversation[]>;
   getConversation(id: number): Promise<Conversation | undefined>;
-  createConversation(conversation: InsertConversation): Promise<Conversation>;
+  createConversation(conversation: InsertConversation & { sessionId: string }): Promise<Conversation>;
   deleteConversation(id: number): Promise<void>;
   
   // Messages
@@ -64,7 +64,7 @@ export class DatabaseStorage implements IStorage {
     return conversation || undefined;
   }
 
-  async createConversation(insertConversation: InsertConversation): Promise<Conversation> {
+  async createConversation(insertConversation: InsertConversation & { sessionId: string }): Promise<Conversation> {
     const [conversation] = await db
       .insert(conversations)
       .values(insertConversation)
