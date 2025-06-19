@@ -38,7 +38,7 @@ export async function ragChatCompletion(
   sessionId: string
 ) {
   const response = await openai.chat.completions.create({
-    model: "gpt-4.1-nano-2025-04-14",
+    model: "gpt-4o-mini",
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       ...messages.map(msg => ({
@@ -54,9 +54,9 @@ export async function ragChatCompletion(
   return response;
 }
 
-export async function streamChatCompletion(messages: Array<{role: string, content: string}>) {
+export async function streamChatCompletion(messages: Array<{role: string; content: string}>) {
   const stream = await openai.chat.completions.create({
-    model: "gpt-4.1-nano-2025-04-14",
+    model: "gpt-4o-mini",
     messages: messages.map(msg => ({
       role: msg.role as "user" | "assistant" | "system",
       content: msg.content
@@ -70,7 +70,7 @@ export async function streamChatCompletion(messages: Array<{role: string, conten
 export async function generateTitle(firstMessage: string): Promise<string> {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4.1-nano-2025-04-14",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
