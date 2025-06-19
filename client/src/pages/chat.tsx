@@ -127,8 +127,8 @@ export default function ChatPage() {
                 <Bot className="h-4 w-4 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">AI Assistant</h1>
-                <p className="text-xs text-gray-500">Online</p>
+                <h1 className="text-lg font-semibold text-gray-900">MyHomi AI</h1>
+                <p className="text-xs text-gray-500">Real Estate Assistant</p>
               </div>
             </div>
           </div>
@@ -163,11 +163,32 @@ export default function ChatPage() {
                   <Bot className="h-8 w-8 text-white" />
                 </div>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-                  How can I help you today?
+                  Welcome to MyHomi AI
                 </h2>
-                <p className="text-gray-600 max-w-md mx-auto">
-                  I'm your AI assistant, ready to help with questions, creative tasks, analysis, and more.
+                <p className="text-gray-600 max-w-md mx-auto mb-6">
+                  Your intelligent real estate assistant. I'll help you find the perfect property by understanding your needs and searching our database.
                 </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto text-sm">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-gray-800 mb-2">🏠 Property Types</h3>
+                    <p className="text-gray-600">Flats, Villas, Plots, Houses</p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-gray-800 mb-2">🎯 Smart Search</h3>
+                    <p className="text-gray-600">I'll ask the right questions to find your match</p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-gray-800 mb-2">💰 Buy or Rent</h3>
+                    <p className="text-gray-600">Residential & Commercial options</p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-gray-800 mb-2">📍 Bangalore</h3>
+                    <p className="text-gray-600">Properties across all major areas</p>
+                  </div>
+                </div>
+                <div className="mt-6 text-xs text-gray-500">
+                  Try: "I want to buy a 2BHK flat in Koramangala under 1 crore" or "Show me rental properties in Indiranagar"
+                </div>
               </div>
             ) : (
               <>

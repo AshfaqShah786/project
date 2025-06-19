@@ -154,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Handle different function types
           if (functionName === "extract_intent_and_slots") {
             if (functionResult.success) {
-              const { slots } = functionResult;
+              const slots = (functionResult as any).slots;
               
               // Get existing session data
               let session = await storage.getUserSession(sessionId);
@@ -182,10 +182,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // All slots filled, fetch properties
                 const propertyResult = await executeFunction("fetch_properties", { slots: mergedSlots });
                 
-                if (propertyResult.success && propertyResult.properties.length > 0) {
-                  finalResponse = `Great! I found ${propertyResult.count} properties matching your criteria:\n\n`;
+                if (propertyResult.success && (propertyResult as any).properties && (propertyResult as any).properties.length > 0) {
+                  const properties = (propertyResult as any).properties;
+                  const count = (propertyResult as any).count;
+                  finalResponse = `Great! I found ${count} properties matching your criteria:\n\n`;
                   
-                  propertyResult.properties.forEach((property: any, index: number) => {
+                  properties.forEach((property: any, index: number) => {
                     finalResponse += `**${index + 1}. ${property.title}**\n`;
                     finalResponse += `📍 ${property.location}, ${property.city}\n`;
                     finalResponse += `💰 ₹${Number(property.price).toLocaleString('en-IN')}\n`;
@@ -206,7 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // This is handled above in the extract_intent_and_slots flow
             finalResponse = "Let me search for properties based on your requirements...";
           } else if (functionName === "search_web") {
-            finalResponse = functionResult.message || "I searched online but couldn't find additional information at the moment.";
+            finalResponse = (functionResult as any).message || "I searched online but couldn't find additional information at the moment.";
           }
           
         } else {
