@@ -123,12 +123,12 @@ export default function ChatPage() {
               <Menu className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                 <Bot className="h-4 w-4 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">MyHomi AI</h1>
-                <p className="text-xs text-gray-500">Real Estate Assistant</p>
+                <h1 className="text-lg font-semibold text-gray-900">AI Chat</h1>
+                <p className="text-xs text-gray-500">Assistant</p>
               </div>
             </div>
           </div>
@@ -159,35 +159,35 @@ export default function ChatPage() {
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
             {messages.length === 0 && !isStreaming ? (
               <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Bot className="h-8 w-8 text-white" />
                 </div>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-                  Welcome to MyHomi AI
+                  Welcome to AI Chat
                 </h2>
                 <p className="text-gray-600 max-w-md mx-auto mb-6">
-                  Your intelligent real estate assistant. I'll help you find the perfect property by understanding your needs and searching our database.
+                  Your intelligent AI assistant. I'm here to help with questions, provide information, and have conversations on a wide variety of topics.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto text-sm">
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-gray-800 mb-2">🏠 Property Types</h3>
-                    <p className="text-gray-600">Flats, Villas, Plots, Houses</p>
+                    <h3 className="font-semibold text-gray-800 mb-2">💭 Ask Questions</h3>
+                    <p className="text-gray-600">Get answers and explanations</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-gray-800 mb-2">🎯 Smart Search</h3>
-                    <p className="text-gray-600">I'll ask the right questions to find your match</p>
+                    <h3 className="font-semibold text-gray-800 mb-2">🧠 Analysis</h3>
+                    <p className="text-gray-600">Help with research and analysis</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-gray-800 mb-2">💰 Buy or Rent</h3>
-                    <p className="text-gray-600">Residential & Commercial options</p>
+                    <h3 className="font-semibold text-gray-800 mb-2">✍️ Writing</h3>
+                    <p className="text-gray-600">Content creation and editing</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-gray-800 mb-2">📍 Bangalore</h3>
-                    <p className="text-gray-600">Properties across all major areas</p>
+                    <h3 className="font-semibold text-gray-800 mb-2">🔍 Problem Solving</h3>
+                    <p className="text-gray-600">Creative and technical solutions</p>
                   </div>
                 </div>
                 <div className="mt-6 text-xs text-gray-500">
-                  Try: "I want to buy a 2BHK flat in Koramangala under 1 crore" or "Show me rental properties in Indiranagar"
+                  Try: "Explain quantum computing" or "Help me write a professional email"
                 </div>
               </div>
             ) : (
